@@ -1,9 +1,14 @@
 package auth
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/minio/minio-go/v7/pkg/signer"
 	"github.com/stretchr/testify/require"
+
+	"github.com/clyso/chorus/pkg/s3"
 )
 
 func TestGetResource(t *testing.T) {
@@ -48,4 +53,36 @@ func TestGetResource(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestDoesSignatureV2MatchAcceptsSignedVirtualHostRequest(t *testing.T) {
+	t.Parallel()
+
+	const (
+		accessKey = "test-access-key"
+		secretKey = "test-secret-key"
+		user      = "test-user"
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/object/nested?acl", nil)
+	req.Host = "bucket.s3.example.com"
+	req = signer.SignV2(*req, accessKey, secretKey, true)
+
+	m := &middleware{
+		allowV2: true,
+		custom: map[string]credMeta{
+			accessKey: {
+				cred: s3.CredentialsV4{
+					AccessKeyID:     accessKey,
+					SecretAccessKey: secretKey,
+				},
+				user: user,
+			},
+		},
+		endpoint: "http://s3.example.com",
+	}
+
+	got, err := m.doesSignatureV2Match(req)
+	require.NoError(t, err)
+	require.Equal(t, user, got)
 }

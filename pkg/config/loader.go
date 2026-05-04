@@ -91,27 +91,21 @@ func setMapValue(m map[string]any, path []string, value string) bool {
 		return false
 	}
 
-	for width := len(path); width >= 1; width-- {
-		foundKey := findMatchingKey(m, strings.Join(path[:width], "_"))
-		if foundKey == "" {
-			continue
-		}
-
-		if width == len(path) {
-			m[foundKey] = convertToOriginalType(m[foundKey], value)
-			return true
-		}
-
-		nested, ok := m[foundKey].(map[string]any)
-		if !ok {
-			return false
-		}
-		if setMapValue(nested, path[width:], value) {
-			return true
-		}
+	foundKey := findMatchingKey(m, path[0])
+	if foundKey == "" {
+		return false
 	}
 
-	return false
+	if len(path) == 1 {
+		m[foundKey] = convertToOriginalType(m[foundKey], value)
+		return true
+	}
+
+	nested, ok := m[foundKey].(map[string]any)
+	if !ok {
+		return false
+	}
+	return setMapValue(nested, path[1:], value)
 }
 
 func findMatchingKey(m map[string]any, candidate string) string {

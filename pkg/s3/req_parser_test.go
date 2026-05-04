@@ -53,6 +53,44 @@ func TestParseBucketAndObjectForHost(t *testing.T) {
 			wantObject:      "photos/2026/04/image.jpg",
 			wantVirtualHost: true,
 		},
+		{
+			name:            "empty endpoint address passthrough",
+			target:          "http://bucket.s3.example.com/object/nested",
+			host:            "bucket.s3.example.com",
+			endpointAddress: "",
+			wantBucket:      "object",
+			wantObject:      "nested",
+		},
+		{
+			name:            "host exactly matches endpoint root",
+			target:          "http://s3.example.com/",
+			host:            "s3.example.com",
+			endpointAddress: "http://s3.example.com",
+		},
+		{
+			name:            "host exactly matches endpoint path style",
+			target:          "http://s3.example.com/bucket/object",
+			host:            "s3.example.com",
+			endpointAddress: "http://s3.example.com",
+			wantBucket:      "bucket",
+			wantObject:      "object",
+		},
+		{
+			name:            "suffix mismatch falls back to path style",
+			target:          "http://wrong.example.com/bucket/object",
+			host:            "wrong.example.com",
+			endpointAddress: "http://s3.example.com",
+			wantBucket:      "bucket",
+			wantObject:      "object",
+		},
+		{
+			name:            "empty host bucket falls back to path style",
+			target:          "http://.s3.example.com/bucket/object",
+			host:            ".s3.example.com",
+			endpointAddress: "http://s3.example.com",
+			wantBucket:      "bucket",
+			wantObject:      "object",
+		},
 	}
 
 	for _, tt := range tests {
