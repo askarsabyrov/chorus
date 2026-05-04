@@ -91,7 +91,13 @@ func setMapValue(m map[string]any, path []string, value string) bool {
 		return false
 	}
 
-	foundKey := findMatchingKey(m, path[0])
+	var foundKey string
+	for k := range m {
+		if strings.EqualFold(k, path[0]) {
+			foundKey = k
+			break
+		}
+	}
 	if foundKey == "" {
 		return false
 	}
@@ -106,15 +112,6 @@ func setMapValue(m map[string]any, path []string, value string) bool {
 		return false
 	}
 	return setMapValue(nested, path[1:], value)
-}
-
-func findMatchingKey(m map[string]any, candidate string) string {
-	for k := range m {
-		if strings.EqualFold(k, candidate) {
-			return k
-		}
-	}
-	return ""
 }
 
 // convertToOriginalType converts value string to match the original value's type.
